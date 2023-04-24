@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,28 +26,33 @@ class MyApp extends StatelessWidget {
 
 class Contacts {
   final String name;
-  const Contacts({required this.name});
+  final String id;
+  Contacts({required this.name}) : id = const Uuid().v4();
 }
 
-class ContactBook {
-  ContactBook._sharedInstance();
+class ContactBook extends ValueNotifier<List<Contacts>> {
+  ContactBook._sharedInstance() : super([]);
   static final ContactBook _shared = ContactBook._sharedInstance();
   factory ContactBook() => _shared;
-
-  final List<Contacts> _contacts = [];
   
-  int get length => _contacts.length;
+  int get length => value.length;
 
   void add({required Contacts contact}) {
-    _contacts.add(contact);
+    final contacts = value;
+    contacts.add(contact);
+    notifyListeners();
   }
 
   void remove({required Contacts contact}) {
-    _contacts.remove(contact);
+    final contacts = value;
+    if (contacts.contains(contact)) {
+      contacts.remove(contact);
+    }
+    notifyListeners();
   }
 
   Contacts? contact({required int index}) {
-    Contacts? contact = _contacts.length > index ? _contacts[index] : null;
+    Contacts? contact = value.length > index ? value[index] : null;
     return contact;
   }
 
@@ -62,14 +68,19 @@ class MyHomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Home Page"),
       ),
-      body: ListView.builder(
-        itemCount: contactBook.length,
-        itemBuilder: (context, index) {
-          final contact = ContactBook().contact(index: index)!;
-          return ListTile(
-            title: Text(contact.name),
-          );
-        },),
+      body: ValueListenableBuilder(
+        valueListenable: ContactBook(),
+        builder: (context, value, child) {
+          return ListView.builder(
+          itemCount: contactBook.length,
+          itemBuilder: (context, index) {
+            final contact = ContactBook().contact(index: index)!;
+            return ListTile(
+              title: Text(contact.name),
+            );
+          },);
+        },
+      ),
       floatingActionButton: FloatingActionButton(onPressed: () async {
         await Navigator.of(context).pushNamed('/new-contact');
       }, 
