@@ -71,12 +71,21 @@ class MyHomePage extends StatelessWidget {
       body: ValueListenableBuilder(
         valueListenable: ContactBook(),
         builder: (context, value, child) {
+          final contacts = value as List<Contacts>;
           return ListView.builder(
-          itemCount: contactBook.length,
+          itemCount: contacts.length,
           itemBuilder: (context, index) {
-            final contact = ContactBook().contact(index: index)!;
-            return ListTile(
-              title: Text(contact.name),
+            final contact = contacts[index];
+            return Dismissible(
+              onDismissed: (direction) => ContactBook().remove(contact: contact),
+              key: ValueKey(contact.id),
+              child: Material(
+                color: Colors.white,
+                elevation: 6.0,
+                child: ListTile(
+                  title: Text(contact.name),
+                ),
+              ),
             );
           },);
         },
